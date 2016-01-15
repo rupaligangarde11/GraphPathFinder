@@ -1,16 +1,18 @@
-import java.util.Stack;
+import java.util.List;
 
 public class GraphTracer {
-    private final Node startNode;
-    private final Stack<Node> nodeStack;
+    public boolean hasPath(Node source, Node destination) {
 
-    public GraphTracer(Node startNode, Stack<Node> nodeStack) {
-
-        this.startNode = startNode;
-        this.nodeStack = nodeStack;
-    }
-
-    public void storeNodeToStack(Node startNode) {
-        nodeStack.push(startNode);
+        if(source.equals(destination)){
+            return true;
+        }
+        else{
+            for(Node node: source.getNeighbours()){
+                if(hasPath(node,destination)){
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }
