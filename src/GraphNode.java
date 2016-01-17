@@ -1,8 +1,4 @@
-import com.sun.corba.se.impl.orbutil.graph.Graph;
-
-import java.sql.Array;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class GraphNode {
@@ -64,23 +60,45 @@ public class GraphNode {
     }
 
     public List<GraphNode> getShortestPath(GraphNode destination) throws NoPathExistException {
-        List<GraphNode> minPath = new ArrayList<>();
-        List<GraphNode> pathToThisNode = new ArrayList<>();
+        ArrayList<GraphNode> minPath = new ArrayList<>();
+        ArrayList<GraphNode> pathToThisNode = new ArrayList<>();
         if(hasPath(destination)) {
-            calculateMinimumPath(destination, new ArrayList<GraphNode>(pathToThisNode), minPath);
+            ArrayList<GraphNode> visitedNodes = new ArrayList<>();
+            calculateMinimumPath(destination, new ArrayList<GraphNode>(pathToThisNode), minPath,visitedNodes);
             return minPath;
         }else
             throw new NoPathExistException("No path available between these two nodes");
     }
 
     private void calculateMinimumPath(GraphNode destination,
-                                      ArrayList<GraphNode> pathToThisNode, List<GraphNode> minPath) {
+                                      ArrayList<GraphNode> pathToThisNode,
+                                      ArrayList<GraphNode> minPath, ArrayList<GraphNode> visitedNodes) {
         pathToThisNode.add(this);
+        if(visitedNodes.contains(this) && !this.equals(destination))
+        {
+            return;
+        }
+        visitedNodes.add(this);
+
         if (this.equals(destination))
         {
-            minPath.addAll(pathToThisNode);
+            if(minPath.size() == 0)
+            {
+                minPath.addAll(pathToThisNode);
+            }
+
+            if(minPath.size() > pathToThisNode.size())
+            {
+                minPath.clear();
+                minPath.addAll(pathToThisNode);
+            }
         }
         for(GraphNode node : neighbours)
-        node.calculateMinimumPath(destination,new ArrayList<GraphNode>(pathToThisNode),minPath);
+        node.calculateMinimumPath(destination,new ArrayList<GraphNode>(pathToThisNode),minPath, visitedNodes);
+    }
+
+    @Override
+    public String toString() {
+        return "nodeName = " + nodeName;
     }
 }
