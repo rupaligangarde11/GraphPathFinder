@@ -1,14 +1,16 @@
+import javafx.util.Pair;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class GraphNode {
-    private List<GraphNode> neighbours;
     private String nodeName;
+    private List<Pair<GraphNode,Integer>> neighboursWithWeight;
 
 
     public GraphNode(String nodeName) {
         this.nodeName = nodeName;
-        neighbours = new ArrayList<>();
+        neighboursWithWeight=new ArrayList<>();
     }
 
     public boolean hasPath(GraphNode destination) {
@@ -30,9 +32,11 @@ public class GraphNode {
     }
 
     private boolean traverseThroughNeighbours(GraphNode destination, List<GraphNode> visitedNodes) {
-        for(GraphNode node: neighbours){
+        for(Pair edgeWithWeight: neighboursWithWeight){
 
-            if((!visitedNodes.contains(node)) && node.findPath(destination,visitedNodes)){
+            GraphNode node = (GraphNode)edgeWithWeight.getKey();
+            if((!visitedNodes.contains(node)) && ( node).findPath(destination,
+                    visitedNodes)){
                 return true;
             }
         }
@@ -55,28 +59,36 @@ public class GraphNode {
         return nodeName != null ? nodeName.hashCode() : 0;
     }
 
-    public void connect(GraphNode graphnode) {
-        neighbours.add(graphnode);
+    public void connect(GraphNode graphnode, int weight) {
+
+        neighboursWithWeight.add(new Pair(graphnode,weight));
+
     }
 
-    public List<GraphNode> getShortestPath(GraphNode destination) throws NoPathExistException {
+
+    public int getShortestPath(GraphNode destination) throws NoPathExistException {
         ArrayList<GraphNode> minPath = new ArrayList<>();
         ArrayList<GraphNode> pathToThisNode = new ArrayList<>();
         if(hasPath(destination)) {
             ArrayList<GraphNode> visitedNodes = new ArrayList<>();
-            calculateMinimumPath(destination, new ArrayList<GraphNode>(pathToThisNode), minPath,visitedNodes);
-            return minPath;
+            int costOfOptimalPath=Integer.MAX_VALUE;
+            int thisPathCost = 0;
+            costOfOptimalPath=calculateMinimumPath(destination, new ArrayList<GraphNode>(pathToThisNode), minPath,
+                    visitedNodes, costOfOptimalPath, thisPathCost);
+            System.out.println(minPath.toString());
+            return costOfOptimalPath;
         }else
             throw new NoPathExistException("No path available between these two nodes");
     }
 
-    private void calculateMinimumPath(GraphNode destination,
-                                      ArrayList<GraphNode> pathToThisNode,
-                                      ArrayList<GraphNode> minPath, ArrayList<GraphNode> visitedNodes) {
+    private int calculateMinimumPath(GraphNode destination,
+                                     ArrayList<GraphNode> pathToThisNode,
+                                     ArrayList<GraphNode> minPath, ArrayList<GraphNode> visitedNodes, int
+                                             costOfOptimalPath, int thisPathCost) {
         pathToThisNode.add(this);
         if(visitedNodes.contains(this) && !this.equals(destination))
         {
-            return;
+            return costOfOptimalPath;
         }
         visitedNodes.add(this);
 
@@ -85,16 +97,23 @@ public class GraphNode {
             if(minPath.size() == 0)
             {
                 minPath.addAll(pathToThisNode);
+                costOfOptimalPath=thisPathCost;
+                return costOfOptimalPath;
             }
-
-            if(minPath.size() > pathToThisNode.size())
+            if(thisPathCost < costOfOptimalPath)
             {
                 minPath.clear();
                 minPath.addAll(pathToThisNode);
+                costOfOptimalPath=thisPathCost;
             }
         }
-        for(GraphNode node : neighbours)
-        node.calculateMinimumPath(destination,new ArrayList<GraphNode>(pathToThisNode),minPath, visitedNodes);
+        for(Pair edgeWithWeight : neighboursWithWeight) {
+           GraphNode node=(GraphNode) edgeWithWeight.getKey();
+            costOfOptimalPath=node.calculateMinimumPath(destination, new ArrayList<>(pathToThisNode),
+                    minPath, visitedNodes, costOfOptimalPath, thisPathCost+(Integer)edgeWithWeight.getValue());
+
+        }
+        return costOfOptimalPath;
     }
 
     @Override
